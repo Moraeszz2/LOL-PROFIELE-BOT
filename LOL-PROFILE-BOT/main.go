@@ -54,12 +54,14 @@ func main() {
 			if userResp == "comandos" {
 				commandList := "1. comando do lol\n2. comando do bot\n3. sair"
 				embed := &discordgo.MessageEmbed{
-					Title: "Comandos",
-					Image: &discordgo.MessageEmbedImage{
-						URL: m.Author.AvatarURL("64"),
-					},
+					Title:       "Comandos",
 					Description: commandList,
-					Color:       0x007BFF,
+					Color:       0x8905b5,
+					Thumbnail: &discordgo.MessageEmbedThumbnail{
+						URL:    m.Author.AvatarURL("256"), // Tamanho do ícone (16, 32, 64, 128, 256, 512)
+						Width:  256,
+						Height: 256,
+					},
 				}
 				_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
 				if err != nil {
