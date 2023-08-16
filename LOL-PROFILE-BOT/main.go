@@ -1,7 +1,7 @@
 package main
 
 import (
-	"LOL-PROFILE-BOT/LOL-PROFILE-BOT/help"
+	help "LOL-PROFILE-BOT/LOL-PROFILE-BOT/Help"
 	"fmt"
 	"log"
 	"os"
@@ -52,9 +52,20 @@ func main() {
 			}
 
 			if userResp == "comandos" {
-				// Mostrar a lista de comandos
-				commandList := "Lista de comandos:\n1. Comando do LOL\n2. Comando do BOT\n3. Sair"
-				s.ChannelMessageSend(m.ChannelID, commandList)
+				commandList := "1. comando do lol\n2. comando do bot\n3. sair"
+				embed := &discordgo.MessageEmbed{
+					Title: "Comandos",
+					Image: &discordgo.MessageEmbedImage{
+						URL: m.Author.AvatarURL("64"),
+					},
+					Description: commandList,
+					Color:       0x007BFF,
+				}
+				_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+				if err != nil {
+					fmt.Println("Error sending embed:", err)
+				}
+
 			} else if userResp == " o tempo limite foi atingido para resposta!" {
 				s.ChannelMessageSend(m.ChannelID, m.Author.Username+userResp)
 			} else {
@@ -73,7 +84,7 @@ func main() {
 	}
 
 	defer DC.Close()
-	fmt.Println("Bot on")
+	fmt.Println("Bot esta on!")
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
