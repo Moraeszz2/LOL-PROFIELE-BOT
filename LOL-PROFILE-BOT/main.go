@@ -1,58 +1,56 @@
 package main
 
 import (
+	config "LOL-PROFILE-BOT/LOL-PROFILE-BOT/Config"
 	help "LOL-PROFILE-BOT/LOL-PROFILE-BOT/Help"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-
-	envPath := filepath.Join("..", ".env")
-	err := godotenv.Load(envPath)
+	configData, err := config.LoadConfig()
 	if err != nil {
-		fmt.Println(".env não foi possivel carregar", err)
-		return
-	}
-	TOKEN := os.Getenv("TOKEN_DISCORD")
-
-	if TOKEN == "" {
-		fmt.Println("Token do bot não fornecido. Preencha os dados corretamente!")
+		fmt.Println("Erro ao carregar configurações:", err)
 		return
 	}
 
-	DC, err := discordgo.New("Bot " + TOKEN)
-
+	DC, err := config.ConnectDiscord(configData.DiscordToken)
 	if err != nil {
-		fmt.Println("Erro ao criar a sessão do bot: ", err)
+		fmt.Println(err)
 		return
 	}
 
 	DC.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.Author.ID == s.State.User.ID || m.Author.Bot {
+		if m.Author.ID == s.State.User.ID {
 			return
 		}
 
-		switch m.Content {
-		case "Bot":
-			resp := "Olá " + m.Author.Username + ", como posso ajudar?"
-			s.ChannelMessageSend(m.ChannelID, resp)
+		if !strings.HasPrefix(m.Content, configData.Prefix) {
+			return
+		}
 
-			userResp, err := help.WaitForUserResponse(s, m.ChannelID, m.Author.ID)
+		args := strings.Split(m.Content, " ")
+
+		if args[0] == configData.Prefix+"bot" {
+			respBot := "Olá " + m.Author.Username + ", como posso ajudar?"
+			s.ChannelMessageSend(m.ChannelID, respBot)
+
+			respUser, err := help.WaitForUserResponse(s, m.ChannelID, m.Author.ID)
+
 			if err != nil {
 				fmt.Println("Erro ao aguardar resposta do usuário:", err)
 				return
 			}
 
-			if userResp == "comandos" {
+			if respUser == configData.Prefix+"comandos" {
 				commandList := "1. comando do lol\n2. comando do bot\n3. sair"
+
 				embed := &discordgo.MessageEmbed{
 					Title:       "Comandos",
 					Description: commandList,
@@ -63,20 +61,11 @@ func main() {
 						Height: 256,
 					},
 				}
-				_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
-				if err != nil {
-					fmt.Println("Error sending embed:", err)
-				}
+				s.ChannelMessageSendEmbed(m.ChannelID, embed)
 
-			} else if userResp == " o tempo limite foi atingido para resposta!" {
-				s.ChannelMessageSend(m.ChannelID, m.Author.Username+userResp)
-			} else {
-				err := "Comando não encontrado"
-				s.ChannelMessageSend(m.ChannelID, err)
 			}
 
 		}
-
 	})
 
 	DC.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
@@ -91,4 +80,5 @@ func main() {
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
+
 }
