@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func SendRequest(nickname string) (getord interface{}) {
+func SendRequest(nickname string) (getProfile interface{}) {
 
 	envPath := filepath.Join("..", ".env")
 	err := godotenv.Load(envPath)
@@ -42,7 +42,7 @@ func SendRequest(nickname string) (getord interface{}) {
 	defer resp.Body.Close()
 
 	// Lê o corpo da resposta
-	corpoResposta, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Erro ao ler a resposta:", err)
 		return
@@ -51,12 +51,12 @@ func SendRequest(nickname string) (getord interface{}) {
 	// Verifica o código de status da resposta
 	if resp.StatusCode == 200 {
 		pl := &profileStruct{}
-		json.Unmarshal([]byte(corpoResposta), pl)
-		getord = map[string]interface{}{
+		json.Unmarshal([]byte(body), pl)
+		getProfile = map[string]interface{}{
 			"name":          pl.Name,
 			"summonerLevel": pl.SummonerLevel,
 		}
-		return getord
+		return getProfile
 	} else {
 		fmt.Printf("Erro: Código de status %d\n", resp.StatusCode)
 	}
